@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gs-bg: #f8faff;
+  --gs-surface: #ffffff;
+  --gs-surface-2: #f1f5fe;
+  --gs-border: #e2e8f6;
+  --gs-electric: #0ea5e9;
+  --gs-electric-dim: #0284c7;
+  --gs-gold: #f59e0b;
+  --gs-gold-dim: #d97706;
+  --gs-success: #10b981;
+  --gs-danger: #ef4444;
+  --gs-warning: #f97316;
+  --gs-violet: #6366f1;
+  --gs-text: #0f172a;
+  --gs-text-muted: #64748b;
+  --gs-text-dim: #94a3b8;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gs-text);
+    background: var(--gs-bg);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    background: var(--gs-bg);
+    color: var(--gs-text);
+  }
+
+  #root {
+    min-height: 100svh;
+  }
+}
+
+@layer components {
+  .gs-card {
+    background: var(--gs-surface);
+    border: 1px solid var(--gs-border);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+
+  .gs-card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .gs-card-hover:hover {
+    border-color: rgba(14, 165, 233, 0.4);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .gs-gradient-text {
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .gs-dot-grid {
+    background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.3;
+  }
+}
+
+@keyframes orbFloat1 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(60px, 40px);
+  }
+  66% {
+    transform: translate(-30px, 60px);
+  }
+}
+
+@keyframes orbFloat2 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-60px, -40px);
+  }
+}
+
+@keyframes orbFloat3 {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-60px);
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes floatCard {
+  from {
+    transform: rotate(-2deg) translateY(0);
+  }
+  to {
+    transform: rotate(-2deg) translateY(-14px);
+  }
+}
+
+@keyframes scoreFill {
+  from {
+    stroke-dasharray: 0 553;
+  }
+  to {
+    stroke-dasharray: var(--score-dash) 553;
+  }
+}
+
+@keyframes vehicleMove {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+
+.vehicle-move {
+  animation: vehicleMove 1.4s ease-in-out infinite;
+}
