@@ -9,6 +9,7 @@ import ActivityBarChart from '../../components/charts/ActivityBarChart'
 import PlansSection from '../../components/ui/PlansSection'
 import NoPlanBanner from '../../components/ui/NoPlanBanner'
 import ActivePolicyCard from '../../components/ui/ActivePolicyCard'
+import { formatCurrency } from '../../utils/formatters'
 
 function Overview() {
   const { user } = useAuthStore()
@@ -24,7 +25,6 @@ function Overview() {
     availablePlans,
     activePlan,
     city,
-    state: userState,
     areaType,
     riskScore,
     locationLoading,
@@ -46,10 +46,10 @@ function Overview() {
     initializeLocation()
   }, [])
 
-  const handlePlanSelection = async (plan, paymentDetails) => {
+  const handlePlanSelection = async (plan) => {
     setSelectedLoadingPlanId(plan.id)
     try {
-      const result = await selectPlan(plan, paymentDetails)
+      const result = await selectPlan(plan)
       if (result.success) {
         // Plan activated successfully
         setShowPlansSection(false)
@@ -106,7 +106,7 @@ function Overview() {
           plans={availablePlans}
           areaType={areaType}
           city={city}
-          state={userState}
+          state={city}
           riskScore={riskScore}
           onPlanSelected={handlePlanSelection}
           loadingPlanId={selectedLoadingPlanId}
@@ -155,9 +155,7 @@ function Overview() {
                     <div className="flex-1">
                       <div className="text-sm font-semibold text-gs-text">{claim.disruption}</div>
                       <div className="text-xs text-gs-muted">
-                        {claim.date instanceof Date 
-                          ? claim.date.toLocaleDateString() 
-                          : new Date(claim.date).toLocaleDateString()}
+                        {new Date(claim.date).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="text-right">

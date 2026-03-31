@@ -7,11 +7,9 @@ import Input from '../../components/ui/Input'
 import StepIndicator from '../../components/ui/StepIndicator'
 import OTPInput from '../../components/ui/OTPInput'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import API from '../../api/client'
 import {
   getPartnerIdHint,
   passwordSchema,
-  planSchema,
   stepOneSchema,
   stepTwoSchema
 } from '../../utils/validation'
@@ -44,25 +42,6 @@ const getCityTier = (city) => {
   return cityTierMap[key] || 'Rural'
 }
 
-/* ─── plan catalogue per tier ─── */
-const planCatalogue = {
-  Rural: [
-    { id: 'rural-basic', name: 'Basic', price: '₹15/week', coverage: '₹200/day', highlight: false },
-    { id: 'rural-standard', name: 'Standard', price: '₹20/week', coverage: '₹300/day', highlight: true },
-    { id: 'rural-premium', name: 'Premium', price: '₹30/week', coverage: '₹450/day', highlight: false }
-  ],
-  'Semi-Urban': [
-    { id: 'semi-basic', name: 'Basic', price: '₹25/week', coverage: '₹350/day', highlight: false },
-    { id: 'semi-standard', name: 'Standard', price: '₹35/week', coverage: '₹500/day', highlight: true },
-    { id: 'semi-premium', name: 'Premium', price: '₹50/week', coverage: '₹700/day', highlight: false }
-  ],
-  Urban: [
-    { id: 'urban-basic', name: 'Basic', price: '₹40/week', coverage: '₹500/day', highlight: false },
-    { id: 'urban-standard', name: 'Standard', price: '₹55/week', coverage: '₹750/day', highlight: true },
-    { id: 'urban-premium', name: 'Premium', price: '₹75/week', coverage: '₹1000/day', highlight: false }
-  ]
-}
-
 const experienceOptions = ['Less than 1 year', '1-2 years', '2-5 years', '5+ years']
 
 /* ─── Default fallback location (Hyderabad) ─── */
@@ -82,7 +61,7 @@ function Register() {
   const navigate = useNavigate()
   const { registerWorker } = useAuthStore()
 
-  /* steps: 1-Personal  2-Partner  3-Location&ID  4-AIVerify  5-Plan  6-OTP  7-Password */
+  /* steps: 1-Personal  2-Partner  3-Location&ID  4-AIVerify  5-OTP  6-Password */
   const [step, setStep] = useState(1)
   const [otpError, setOtpError] = useState(false)
   const [resend, setResend] = useState(30)
@@ -114,7 +93,6 @@ function Register() {
       platform: 'Zomato',
       partnerId: '',
       experience: '',
-      plan: '',
       password: '',
       confirmPassword: ''
     }
@@ -124,11 +102,10 @@ function Register() {
   const password = form.watch('password')
   const city = form.watch('city')
   const cityTier = useMemo(() => getCityTier(city), [city])
-  const availablePlans = useMemo(() => planCatalogue[cityTier] || planCatalogue.Rural, [cityTier])
 
   /* ── OTP countdown ── */
   useEffect(() => {
-    if (step !== 6 || resend <= 0) return
+    if (step !== 5 || resend <= 0) return
     const id = setInterval(() => setResend((p) => (p > 0 ? p - 1 : 0)), 1000)
     return () => clearInterval(id)
   }, [step, resend])
@@ -224,12 +201,11 @@ function Register() {
         return
       }
       setStep(4) // go to AI verify
-    } else if (step === 5) {
-      if (validateStep(planSchema)) {
-        setStep(6)
-        setResend(30)
-        setOtpError(false)
-      }
+    } else if (step === 4) {
+      // After AI verification, go directly to OTP (skip plan)
+      setStep(5)
+      setResend(30)
+      setOtpError(false)
     }
   }
 
@@ -240,7 +216,7 @@ function Register() {
       
       if (VALID_OTPS.includes(value)) {
         setOtpError(false)
-        setStep(7)
+        setStep(6)
       } else {
         setOtpError(true)
       }
@@ -284,7 +260,6 @@ function Register() {
         platform: form.getValues('platform'),
         partnerId: form.getValues('partnerId'),
         experience: form.getValues('experience'),
-        plan: form.getValues('plan'),
         password: form.getValues('password'),
         location,
         trustScore
@@ -333,7 +308,7 @@ function Register() {
   }
 
   /* ─── step labels for the indicator ─── */
-  const stepLabels = ['Personal', 'Partner', 'Location & ID', 'AI Verify', 'Plan', 'OTP', 'Password']
+  const stepLabels = ['Personal', 'Partner', 'Location & ID', 'AI Verify', 'OTP', 'Password']
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-6 py-16">
@@ -555,7 +530,7 @@ function Register() {
                   <div className="text-xs text-emerald-600">
                     {trustScore >= 80 ? '✅ Excellent — Verified successfully' : trustScore >= 60 ? '⚡ Good — Verified with minor flags' : '⚠️ Review pending — Manual check required'}
                   </div>
-                  <Button onClick={() => setStep(5)} className="mt-2 w-full">Continue to plan selection</Button>
+                  <Button onClick={() => setStep(5)} className="mt-2 w-full">Continue to phone verification</Button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -568,53 +543,8 @@ function Register() {
           </div>
         )}
 
-        {/* ───────── Step 5 – Plan (dynamic by city tier) ───────── */}
+        {/* ───────── Step 5 – OTP ───────── */}
         {step === 5 && (
-          <div className="mt-8 flex flex-col gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gs-text">Choose your plan</h2>
-              <p className="text-sm text-gs-muted">
-                Plans for <span className="font-semibold text-gs-text">{cityTier}</span> zone — pick a weekly coverage tier.
-              </p>
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              {availablePlans.map((plan) => {
-                const selected = form.watch('plan') === plan.id
-                return (
-                  <button
-                    key={plan.id}
-                    type="button"
-                    onClick={() => form.setValue('plan', plan.id)}
-                    className={`relative rounded-xl border px-4 py-4 text-left text-xs transition ${
-                      selected
-                        ? 'border-gs-electric bg-blue-50 shadow-[0_0_0_2px_rgba(14,165,233,0.25)]'
-                        : 'border-gs-border bg-white hover:border-gs-electric/50'
-                    }`}
-                  >
-                    {plan.highlight && (
-                      <span className="absolute -top-2 right-3 rounded-full bg-gradient-to-r from-gs-electric to-gs-violet px-2 py-0.5 text-[10px] font-bold text-white shadow">
-                        Popular
-                      </span>
-                    )}
-                    <div className="font-semibold text-gs-text">{plan.name}</div>
-                    <div className="mt-1 font-mono text-sm text-gs-electric">{plan.price}</div>
-                    <div className="mt-0.5 text-gs-muted">{plan.coverage} coverage</div>
-                  </button>
-                )
-              })}
-            </div>
-            {form.formState.errors.plan?.message && (
-              <div className="text-xs text-gs-danger">{form.formState.errors.plan?.message}</div>
-            )}
-            <div className="flex gap-3">
-              <Button variant="secondary" onClick={() => setStep(4)} className="flex-1">Back</Button>
-              <Button onClick={handleNext} className="flex-1">Continue</Button>
-            </div>
-          </div>
-        )}
-
-        {/* ───────── Step 6 – OTP ───────── */}
-        {step === 6 && (
           <div className="mt-8 flex flex-col items-center gap-4 text-center">
             <div>
               <h2 className="text-xl font-semibold text-gs-text">Verify your phone</h2>
@@ -629,12 +559,12 @@ function Register() {
                 <button type="button" onClick={() => setResend(30)} className="font-semibold text-gs-electric">Resend OTP</button>
               )}
             </div>
-            <Button variant="secondary" onClick={() => setStep(5)} className="mt-2 w-full">Back</Button>
+            <Button variant="secondary" onClick={() => setStep(4)} className="mt-2 w-full">Back</Button>
           </div>
         )}
 
-        {/* ───────── Step 7 – Password ───────── */}
-        {step === 7 && (
+        {/* ───────── Step 6 – Password ───────── */}
+        {step === 6 && (
           <div className="mt-8 flex flex-col gap-4">
             <div>
               <h2 className="text-xl font-semibold text-gs-text">Set a password</h2>
@@ -683,7 +613,7 @@ function Register() {
               <Button 
                 type="button"
                 variant="secondary" 
-                onClick={() => setStep(6)} 
+                onClick={() => setStep(5)} 
                 className="flex-1"
                 disabled={loading}
               >

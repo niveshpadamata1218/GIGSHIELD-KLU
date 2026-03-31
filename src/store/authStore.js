@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import API from '../api/client'
+import { eventBus, EVENT_NAMES } from '../utils/eventBus'
 
 const storedUser = localStorage.getItem('user')
 const storedRole = localStorage.getItem('role')
@@ -67,6 +68,14 @@ const updateRegisteredAccount = (phone, updates) => {
   return null
 }
 
+const normalizeAreaType = (cityTier) => {
+  const tier = (cityTier || '').toLowerCase()
+  if (tier === 'urban') return 'urban'
+  if (tier === 'semi-urban') return 'semi-urban'
+  if (tier === 'semi-rural') return 'semi-rural'
+  return 'rural'
+}
+
 /* ─── Test Credentials (for development) ─── */
 const ADMIN_ACCOUNTS = [
   { email: 'admin@gigshield.in', password: 'admin@shield2026', name: 'Admin User' },
@@ -74,7 +83,7 @@ const ADMIN_ACCOUNTS = [
 ]
 
 const WORKER_ACCOUNTS = [
-  { phone: '9876543210', password: 'worker123', name: 'Akshith Kumar' },
+  { phone: '9876543210', password: 'demo@123', name: 'Akshith Kumar' },
   { phone: '9123456789', password: 'test123', name: 'Test Worker' }
 ]
 
@@ -180,13 +189,18 @@ export const useAuthStore = create((set) => ({
             platform: registeredAccount.platform || 'Zomato',
             partnerId: registeredAccount.partnerId || '',
             experience: registeredAccount.experience || '',
-            plan: registeredAccount.plan || 'Urban Plan',
+            plan: registeredAccount.plan ?? null,
+            activePlan: registeredAccount.activePlan ?? null,
             planActivated: registeredAccount.planActivated || false,
             role: 'worker'
           }
           const token = `bearer_${Date.now()}_${Math.random()}`
           persistAuth({ token, user, role: 'worker' })
           set({ user, role: 'worker', token, isAuthenticated: true })
+          eventBus.emit(EVENT_NAMES.WORKER_LOGGED_IN, {
+            workerId: user.phone || user.id,
+            workerData: user
+          })
           console.log('Logged in user:', user)
           return { success: true }
         }
@@ -276,10 +290,20 @@ export const useAuthStore = create((set) => ({
       
       // Basic client-side validation
       const { fullName, phone, password } = payload
+      const normalizedName = String(fullName || '').trim()
+      const normalizedPhone = String(phone || '').trim()
 
-      if (!fullName || !phone || !password) {
+      if (!normalizedName || !normalizedPhone || !password) {
         console.log('Missing fields')
         return { success: false, message: 'All fields are required' }
+      }
+
+      if (normalizedName.length < 3) {
+        return { success: false, message: 'Name must be at least 3 characters' }
+      }
+
+      if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
+        return { success: false, message: 'Enter a valid 10-digit Indian mobile number' }
       }
 
       if (password.length < 6) {
@@ -289,7 +313,7 @@ export const useAuthStore = create((set) => ({
 
       // Check if phone already registered
       const registeredAccounts = getRegisteredAccounts()
-      if (registeredAccounts.find((acc) => acc.phone === phone)) {
+      if (registeredAccounts.find((acc) => acc.phone === normalizedPhone)) {
         console.log('Phone already registered')
         return { success: false, message: 'Phone number already registered' }
       }
@@ -297,47 +321,56 @@ export const useAuthStore = create((set) => ({
       // Try API if available
       try {
         console.log('Trying to register via API...')
-        const response = await API.post('/auth/register', payload)
-        const { token, user, role } = response.data
-        persistAuth({ token, user, role })
-        set({ user, role, token, isAuthenticated: true })
-
-        // Also save to local registered accounts
-        saveRegisteredAccount({
-          phone,
-          password,
-          name: fullName,
-          plan: user.plan || 'Urban Plan'
-        })
+        await API.post('/auth/register', payload)
 
         console.log('API registration successful')
-        return { success: true }
       } catch (apiError) {
         console.log('API registration failed, using mock registration:', apiError.message)
-        
-        // Mock registration - save to localStorage
-        const newAccount = {
-          phone,
-          password,
-          name: fullName,
-          plan: 'Urban Plan'
-        }
-        saveRegisteredAccount(newAccount)
-
-        const user = {
-          id: `worker_${Date.now()}`,
-          name: fullName,
-          phone,
-          role: 'worker',
-          plan: 'Urban Plan'
-        }
-        const token = `bearer_${Date.now()}_${Math.random()}`
-        persistAuth({ token, user, role: 'worker' })
-        set({ user, role: 'worker', token, isAuthenticated: true })
-        
-        console.log('Mock registration successful, user:', user)
-        return { success: true, message: 'Account created! You can now login with these credentials.' }
       }
+
+      const newAccount = {
+        phone: normalizedPhone,
+        password,
+        name: normalizedName,
+        city: payload.city || '',
+        cityTier: payload.cityTier || '',
+        areaType: normalizeAreaType(payload.cityTier),
+        platform: payload.platform || 'Zomato',
+        partnerId: payload.partnerId || '',
+        experience: payload.experience || '',
+        plan: null,
+        activePlan: null,
+        planActivated: false,
+        registeredOn: new Date().toISOString()
+      }
+
+      saveRegisteredAccount(newAccount)
+
+      const workerSyncData = {
+        id: normalizedPhone,
+        name: normalizedName,
+        phone: normalizedPhone,
+        city: newAccount.city,
+        areaType: newAccount.areaType,
+        platform: newAccount.platform,
+        partnerId: newAccount.partnerId,
+        plan: null,
+        status: 'active',
+        riskScore: 0,
+        gigScore: 0
+      }
+
+      eventBus.emit(EVENT_NAMES.WORKER_REGISTERED, workerSyncData)
+      eventBus.emit(EVENT_NAMES.WORKER_UPDATED, {
+        workerId: workerSyncData.phone,
+        workerData: workerSyncData
+      })
+
+      // Registration should not auto-login. User will login from /login.
+      clearAuth()
+      set({ user: null, role: null, token: null, isAuthenticated: false })
+
+      return { success: true, message: 'Account created successfully. Please login to continue.' }
     } catch (error) {
       console.error('Registration error:', error)
       return { success: false, message: error.message || 'Registration failed' }
@@ -434,6 +467,55 @@ export const useAuthStore = create((set) => ({
     } catch (error) {
       console.error('Plan activation error:', error)
       return { success: false, message: 'Failed to activate plan' }
+    }
+  },
+
+  updateUserProfile: async (profileData) => {
+    try {
+      const user = localStorage.getItem('user')
+      if (!user) {
+        return { success: false, message: 'No user found' }
+      }
+
+      const currentUser = JSON.parse(user)
+      const updatedUser = {
+        ...currentUser,
+        name: profileData.name || currentUser.name,
+        email: profileData.email || currentUser.email,
+        city: profileData.city || currentUser.city,
+        state: profileData.state || currentUser.state,
+        profilePicture: profileData.profilePicture || currentUser.profilePicture
+      }
+
+      // Update in registered accounts
+      updateRegisteredAccount(currentUser.phone, updatedUser)
+
+      // Persist and update session
+      persistAuth({
+        token: currentUser.token || localStorage.getItem('token'),
+        user: updatedUser,
+        role: currentUser.role || localStorage.getItem('role')
+      })
+      set({ user: updatedUser })
+
+      eventBus.emit(EVENT_NAMES.WORKER_DATA_SYNC, {
+        workerId: updatedUser.phone || updatedUser.id,
+        workerData: {
+          name: updatedUser.name,
+          phone: updatedUser.phone,
+          city: updatedUser.city,
+          state: updatedUser.state
+        }
+      })
+      eventBus.emit(EVENT_NAMES.WORKER_UPDATED, {
+        workerId: updatedUser.phone || updatedUser.id,
+        workerData: updatedUser
+      })
+
+      return { success: true, message: 'Profile updated successfully' }
+    } catch (error) {
+      console.error('Profile update error:', error)
+      return { success: false, message: 'Failed to update profile' }
     }
   },
 

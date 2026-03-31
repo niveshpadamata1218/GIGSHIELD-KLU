@@ -9,9 +9,19 @@ function WorkerRegistry() {
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
 
-  const filtered = workers.filter((worker) =>
-    worker.name.toLowerCase().includes(query.toLowerCase())
-  )
+  const filtered = (workers || [])
+    .filter((worker) => {
+      const normalizedQuery = query.toLowerCase()
+      const matchesQuery =
+        (worker.name || '').toLowerCase().includes(normalizedQuery) ||
+        String(worker.phone || '').includes(query)
+
+      if (activeFilter === 'Active') return matchesQuery && worker.status === 'active'
+      if (activeFilter === 'Suspended') return matchesQuery && worker.status === 'inactive'
+      if (activeFilter === 'Plan type') return matchesQuery && Boolean(worker.plan && worker.plan.name)
+
+      return matchesQuery
+    })
 
   return (
     <motion.div
@@ -70,25 +80,25 @@ function WorkerRegistry() {
               {filtered.map((worker) => (
                 <tr key={worker.id} className="border-t border-gs-border">
                   <td className="py-3 font-mono text-xs text-gs-muted">{worker.id}</td>
-                  <td className="py-3">{worker.name}</td>
+                  <td className="py-3">{worker.name || 'Unknown Worker'}</td>
                   <td className="py-3">{worker.phone}</td>
-                  <td className="py-3">{worker.platform}</td>
-                  <td className="py-3">{worker.plan}</td>
+                  <td className="py-3">{worker.platform || '-'}</td>
+                  <td className="py-3">{worker.plan?.name || 'No plan'}</td>
                   <td
                     className={`py-3 font-mono ${
-                      worker.gigScore >= 75
+                      (worker.gigScore || 0) >= 8
                         ? 'text-gs-success'
-                        : worker.gigScore >= 60
+                        : (worker.gigScore || 0) >= 6
                         ? 'text-gs-gold'
-                        : worker.gigScore >= 40
+                        : (worker.gigScore || 0) >= 4
                         ? 'text-gs-warning'
                         : 'text-gs-danger'
                     }`}
                   >
-                    {worker.gigScore}
+                    {(worker.gigScore || 0).toFixed(1)}
                   </td>
                   <td className="py-3 capitalize">{worker.status}</td>
-                  <td className="py-3">{worker.joinDate}</td>
+                  <td className="py-3">{worker.joinDate ? new Date(worker.joinDate).toLocaleDateString() : '-'}</td>
                 </tr>
               ))}
             </tbody>

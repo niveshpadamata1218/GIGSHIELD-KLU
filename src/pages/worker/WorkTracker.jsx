@@ -17,8 +17,8 @@ function WorkTracker() {
     sessionActive,
     sessionStart,
     currentSession,
-    weeklyActivity,
-    sessions,
+    weeklyActivity = [],
+    sessions = [],
     startSession,
     endSession
   } = useDashboardStore()

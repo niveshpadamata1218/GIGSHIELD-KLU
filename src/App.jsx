@@ -5,7 +5,7 @@ import AnimatedBackground from './components/ui/AnimatedBackground'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 const Landing = lazy(() => import('./pages/Landing'))
 const WorkerLogin = lazy(() => import('./pages/auth/WorkerLogin'))
-const AdminLogin = lazy(() => import('./pages/auth/AdminLogin'))
+const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const Register = lazy(() => import('./pages/auth/Register'))
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'))
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
@@ -15,6 +15,7 @@ const WorkTracker = lazy(() => import('./pages/worker/WorkTracker'))
 const GigScorePage = lazy(() => import('./pages/worker/GigScorePage'))
 const Claims = lazy(() => import('./pages/worker/Claims'))
 const Alerts = lazy(() => import('./pages/worker/Alerts'))
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'))
 const Disruptions = lazy(() => import('./pages/admin/Disruptions'))
 const AdminClaims = lazy(() => import('./pages/admin/AdminClaims'))
@@ -66,12 +67,22 @@ function App() {
               }
             >
               <Route index element={<Overview />} />
+              <Route path="profile" element={<Navigate to="/dashboard" replace />} />
               <Route path="policy" element={<Policy />} />
               <Route path="work" element={<WorkTracker />} />
               <Route path="gigscore" element={<GigScorePage />} />
               <Route path="claims" element={<Claims />} />
               <Route path="alerts" element={<Alerts />} />
             </Route>
+
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/admin"

@@ -23,6 +23,7 @@ function WorkerLogin() {
   const [resend, setResend] = useState(30)
   const [tempToken, setTempToken] = useState(null)
   const [pendingPhone, setPendingPhone] = useState('')
+  const [otpResetTrigger, setOtpResetTrigger] = useState(0)
 
   const form = useForm({
     resolver: zodResolver(workerLoginSchema),
@@ -85,6 +86,7 @@ function WorkerLogin() {
     } else {
       setBannerError(result.message || 'OTP is incorrect. Please try again.')
       setOtpError(true)
+      setOtpResetTrigger(prev => prev + 1) // Trigger OTP reset
       triggerShake()
     }
   }
@@ -187,12 +189,24 @@ function WorkerLogin() {
             <div className="flex flex-col items-center gap-4">
               <div className="text-sm font-semibold text-gs-text">Verify your phone</div>
               <div className="text-xs text-gs-muted">OTP sent to {maskedPhone}</div>
-              <OTPInput onComplete={handleOtpComplete} hasError={otpError} disabled={loading} />
+              <OTPInput onComplete={handleOtpComplete} hasError={otpError} resetTrigger={otpResetTrigger} disabled={loading} />
               {bannerError && stage === 'otp' ? (
                 <div className="w-full rounded-lg border-l-4 border-gs-danger bg-red-50 px-3 py-2 text-xs text-gs-danger">
                   {bannerError}
                 </div>
               ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  setStage('credentials')
+                  setBannerError('')
+                  setOtpError(false)
+                  setOtpResetTrigger(0)
+                }}
+                className="text-xs font-semibold text-gs-electric hover:text-gs-violet"
+              >
+                ← Back to login
+              </button>
               <div className="text-xs text-gs-dim">
                 {resend > 0 ? (
                   `Resend in ${resend}s`

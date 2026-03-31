@@ -11,7 +11,7 @@ const links = [
 ]
 
 function Sidebar({ isMobile = false, isOpen = false, onClose }) {
-  const { user, logout } = useAuthStore()
+  const { logout } = useAuthStore()
 
   const content = (
     <div className="flex h-full flex-col">
@@ -21,23 +21,9 @@ function Sidebar({ isMobile = false, isOpen = false, onClose }) {
         </span>
         <span className="text-sm font-semibold text-gs-text">Home</span>
       </Link>
-      <div className="flex items-center gap-3 rounded-lg border border-gs-border-light bg-gs-surface-2 px-3 py-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-gs-electric to-gs-violet text-sm font-semibold text-white">
-          {user?.name
-            ? user.name
-                .split(' ')
-                .map((part) => part[0])
-                .join('')
-            : 'GS'}
-        </div>
-        <div>
-          <div className="text-sm font-semibold text-gs-text">
-            {user?.name || 'Gig Worker'}
-          </div>
-          <div className="mt-1 inline-flex rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-gs-electric">
-            {user?.plan || 'Urban Plan'}
-          </div>
-        </div>
+      <div className="rounded-lg border border-gs-border-light bg-gs-surface-2 px-3 py-3">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-gs-muted">Worker Panel</div>
+        <div className="mt-1 text-sm font-semibold text-gs-text">Coverage and Work Controls</div>
       </div>
 
       <nav className="mt-8 flex flex-col gap-2">

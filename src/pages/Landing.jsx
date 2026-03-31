@@ -177,11 +177,8 @@ function Landing() {
   const [failedSlides, setFailedSlides] = useState({})
   const heroRef = useRef(null)
 
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ['start start', 'end start']
-  })
-  const heroMediaY = useTransform(scrollYProgress, [0, 1], shouldReduceMotion ? [0, 0] : [0, 38])
+  const { scrollY } = useScroll()
+  const heroMediaY = useTransform(scrollY, [0, 700], shouldReduceMotion ? [0, 0] : [0, 38])
 
   const availableSlides = useMemo(
     () => heroImages.filter((slide) => !failedSlides[slide.src]),

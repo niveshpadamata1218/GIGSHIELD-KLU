@@ -54,18 +54,18 @@ function FraudDetection() {
             </thead>
             <tbody>
               {fraudAlerts.map((alert) => (
-                <tr key={alert.claimId} className="border-t border-gs-border">
+                <tr key={alert.id || alert.claimId} className="border-t border-gs-border">
                   <td className="py-3 font-mono text-xs text-gs-muted">{alert.workerId}</td>
-                  <td className="py-3">{alert.name}</td>
+                  <td className="py-3">{alert.name || 'Unknown'}</td>
                   <td className="py-3 font-mono text-xs text-gs-muted">{alert.claimId}</td>
                   <td className="py-3">
                     <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-gs-danger">
-                      {alert.fraudScore}
+                      {alert.fraudScore || 0}
                     </span>
                   </td>
                   <td className="py-3">
                     <div className="flex flex-wrap gap-2">
-                      {alert.flags.map((flag) => (
+                      {(alert.flags || []).map((flag) => (
                         <span
                           key={flag}
                           className="rounded-full bg-gs-surface-2 px-2 py-1 text-[11px] text-gs-text"
@@ -73,6 +73,11 @@ function FraudDetection() {
                           {flag}
                         </span>
                       ))}
+                      {!alert.flags?.length && (
+                        <span className="rounded-full bg-gs-surface-2 px-2 py-1 text-[11px] text-gs-text">
+                          Under review
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="py-3">

@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 
-function OTPInput({ onComplete, hasError }) {
+function OTPInput({ onComplete, hasError, resetTrigger }) {
   const [values, setValues] = useState(Array(6).fill(''))
   const inputsRef = useRef([])
 
   useEffect(() => {
     inputsRef.current?.[0]?.focus()
   }, [])
+
+  // Reset OTP input when error occurs
+  useEffect(() => {
+    if (hasError) {
+      setValues(Array(6).fill(''))
+      inputsRef.current?.[0]?.focus()
+    }
+  }, [hasError, resetTrigger])
 
   const updateValue = (index, value) => {
     const next = [...values]
