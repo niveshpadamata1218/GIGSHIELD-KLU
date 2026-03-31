@@ -101,10 +101,7 @@ export const passwordSchema = z
   .object({
     password: z
       .string()
-      .min(8, 'Must be 8+ characters with uppercase, number, and special character')
-      .regex(/[A-Z]/, 'Must include an uppercase letter')
-      .regex(/[0-9]/, 'Must include a number')
-      .regex(/[^a-zA-Z0-9]/, 'Must include a special character'),
+      .min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(1, 'Please confirm your password')
   })
   .refine((data) => data.password === data.confirmPassword, {

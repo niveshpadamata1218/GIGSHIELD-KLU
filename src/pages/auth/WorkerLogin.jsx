@@ -59,7 +59,7 @@ function WorkerLogin() {
     const result = await requestWorkerLogin(values)
     setLoading(false)
     if (!result.success) {
-      setBannerError('Invalid credentials. Please use the demo account.')
+      setBannerError(result.message || 'Invalid credentials. Please try again.')
       triggerShake()
       return
     }
@@ -77,17 +77,26 @@ function WorkerLogin() {
   }
 
   const handleOtpComplete = async (value) => {
+    setLoading(true)
     const result = await verifyWorkerOtp({ phone: pendingPhone, tempToken, otp: value })
+    setLoading(false)
     if (result.success) {
       navigate('/dashboard')
     } else {
+      setBannerError(result.message || 'OTP is incorrect. Please try again.')
       setOtpError(true)
       triggerShake()
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-16">
+    <div className="relative flex min-h-screen items-center justify-center px-6 py-16">
+      <Link to="/" className="absolute left-6 top-6 flex items-center gap-2 font-display text-xl font-bold text-gs-text transition-opacity hover:opacity-80 z-10">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gs-electric to-gs-violet text-xs font-semibold text-white">
+          GS
+        </span>
+        GigShield
+      </Link>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -170,7 +179,7 @@ function WorkerLogin() {
                   Phone: 9876543210 | Password: demo@123
                 </div>
               ) : null}
-              <Button type="submit" className="mt-2 w-full">
+              <Button type="submit" className="mt-2 w-full" disabled={loading}>
                 {loading ? <LoadingSpinner /> : 'Sign in'}
               </Button>
             </form>
@@ -178,9 +187,11 @@ function WorkerLogin() {
             <div className="flex flex-col items-center gap-4">
               <div className="text-sm font-semibold text-gs-text">Verify your phone</div>
               <div className="text-xs text-gs-muted">OTP sent to {maskedPhone}</div>
-              <OTPInput onComplete={handleOtpComplete} hasError={otpError} />
-              {otpError ? (
-                <div className="text-xs text-gs-danger">Incorrect OTP. Please try again.</div>
+              <OTPInput onComplete={handleOtpComplete} hasError={otpError} disabled={loading} />
+              {bannerError && stage === 'otp' ? (
+                <div className="w-full rounded-lg border-l-4 border-gs-danger bg-red-50 px-3 py-2 text-xs text-gs-danger">
+                  {bannerError}
+                </div>
               ) : null}
               <div className="text-xs text-gs-dim">
                 {resend > 0 ? (

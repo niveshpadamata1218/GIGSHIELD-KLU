@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
@@ -50,7 +50,13 @@ function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-16">
+    <div className="relative flex min-h-screen items-center justify-center px-6 py-16">
+      <Link to="/" className="absolute left-6 top-6 flex items-center gap-2 font-display text-xl font-bold text-gs-text transition-opacity hover:opacity-80">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gs-electric to-gs-violet text-xs font-semibold text-white">
+          GS
+        </span>
+        GigShield
+      </Link>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

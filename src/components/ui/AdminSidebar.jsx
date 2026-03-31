@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 
 const links = [
@@ -14,7 +14,13 @@ function AdminSidebar({ isMobile = false, isOpen = false, onClose }) {
 
   const content = (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3">
+      <Link to="/" onClick={onClose} className="mb-6 flex items-center gap-2 rounded-lg border border-gs-border bg-gradient-to-br from-gs-electric/10 to-gs-violet/10 px-3 py-2 transition hover:border-gs-electric hover:bg-gradient-to-br hover:from-gs-electric/20 hover:to-gs-violet/20">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-gs-electric to-gs-violet text-xs font-semibold text-white">
+          GS
+        </span>
+        <span className="text-sm font-semibold text-gs-text">Home</span>
+      </Link>
+      <div className="flex items-center gap-3 rounded-lg border border-gs-border-light bg-gs-surface-2 px-3 py-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-gs-electric to-gs-violet text-sm font-semibold text-white">
           {user?.name?.[0] || 'A'}
         </div>
@@ -24,7 +30,7 @@ function AdminSidebar({ isMobile = false, isOpen = false, onClose }) {
         </div>
       </div>
 
-      <nav className="mt-10 flex flex-col gap-2">
+      <nav className="mt-8 flex flex-col gap-2">
         {links.map((link) => (
           <NavLink
             key={link.to}
